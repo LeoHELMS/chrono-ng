@@ -1,0 +1,4 @@
+﻿  MyForm.cpp
+  .NETFramework,Version=v4.6.1.AssemblyAttributes.cpp
+  MyForm.obj : module MSIL détecté ; liens incrémentiels désactivés pour MSIL ; édition de liens complète en cours
+LINK : fatal error LNK1561: le point d'entrÚe doit Ûtre dÚfini
