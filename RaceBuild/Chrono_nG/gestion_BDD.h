@@ -22,4 +22,6 @@ public:
 	void creation_liaison(      String^ idCourse, String^ idCoureur);
 	void suppression_liaison(   String^ idCourse, String^ idCoureur);
 	String^ verificationLiaison(int^    idCourse, int^    idCoureur);
+
+	//Renommer GestionBDD, ajouter gestionLiaison, gestionCoureur et gestionCourse
 };

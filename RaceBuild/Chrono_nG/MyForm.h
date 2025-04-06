@@ -29,6 +29,7 @@ private: System::Windows::Forms::DataGridViewButtonColumn^  liaisonDeliaison;
 
 private: System::Windows::Forms::ComboBox^  comboBox1;
 private: System::Windows::Forms::Label^  label1;
+private: System::Windows::Forms::ErrorProvider^ errorProvider1;
 
 private: System::Windows::Forms::Button^  associer_coureurs_courses;
 
@@ -63,6 +64,7 @@ private:
 	/// </summary>
 	void InitializeComponent(void)
 	{
+		this->components = (gcnew System::ComponentModel::Container());
 		this->dataGridView1 = (gcnew System::Windows::Forms::DataGridView());
 		this->liaisonDeliaison = (gcnew System::Windows::Forms::DataGridViewButtonColumn());
 		this->save_and_reload = (gcnew System::Windows::Forms::Button());
@@ -72,7 +74,9 @@ private:
 		this->associer_coureurs_courses = (gcnew System::Windows::Forms::Button());
 		this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
 		this->label1 = (gcnew System::Windows::Forms::Label());
+		this->errorProvider1 = (gcnew System::Windows::Forms::ErrorProvider(this->components));
 		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView1))->BeginInit();
+		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->BeginInit();
 		this->SuspendLayout();
 		// 
 		// dataGridView1
@@ -165,7 +169,7 @@ private:
 		this->comboBox1->FormattingEnabled = true;
 		this->comboBox1->Location = System::Drawing::Point(185, 80);
 		this->comboBox1->Name = L"comboBox1";
-		this->comboBox1->Size = System::Drawing::Size(121, 24);
+		this->comboBox1->Size = System::Drawing::Size(121, 21);
 		this->comboBox1->TabIndex = 9;
 		this->comboBox1->Visible = false;
 		this->comboBox1->SelectedIndexChanged += gcnew System::EventHandler(this, &MyForm::comboBox1_SelectedIndexChanged);
@@ -175,14 +179,18 @@ private:
 		this->label1->AutoSize = true;
 		this->label1->Location = System::Drawing::Point(23, 83);
 		this->label1->Name = L"label1";
-		this->label1->Size = System::Drawing::Size(139, 16);
+		this->label1->Size = System::Drawing::Size(110, 13);
 		this->label1->TabIndex = 10;
 		this->label1->Text = L"sélection de la course";
 		this->label1->Visible = false;
 		// 
+		// errorProvider1
+		// 
+		this->errorProvider1->ContainerControl = this;
+		// 
 		// MyForm
 		// 
-		this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
+		this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 		this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 		this->AutoScroll = true;
 		this->BackColor = System::Drawing::SystemColors::ScrollBar;
@@ -206,6 +214,7 @@ private:
 		this->Text = L"phase d\'inscription";
 		this->Load += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
 		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView1))->EndInit();
+		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->EndInit();
 		this->ResumeLayout(false);
 		this->PerformLayout();
 
@@ -252,11 +261,11 @@ private:
 	}
 
 	private: System::Void gerer_coureurs_Click(System::Object^  sender, System::EventArgs^  e) {
-		this->dataGridView1->AllowUserToAddRows = true;
+		this->dataGridView1->AllowUserToAddRows = false;
 		affichage("coureur");	
 	}
 	private: System::Void gerer_courses_Click(System::Object^  sender, System::EventArgs^  e) {
-		this->dataGridView1->AllowUserToAddRows = true;
+		this->dataGridView1->AllowUserToAddRows = false;
 		affichage("course");
 	}
 #pragma endregion
@@ -266,6 +275,7 @@ private:
 		gererLaBDD->valeurBDD = valeurBDD;
 		this->dataGridView1->Show();
 		if (valeurBDD == "coureur" || valeurBDD == "course") {
+			this->errorProvider1->Clear();
 			dataGridView1->ReadOnly = false;
 			this->dataGridView1->DataSource = gererLaBDD->chargementBDD();
 			this->liaisonDeliaison->DisplayIndex = 5;
@@ -275,33 +285,33 @@ private:
 			this->label1->Visible = false;
 			return;
 		}
-		this->save_and_reload->Hide();
-		dataGridView1->ReadOnly = true;
-		this->liaisonDeliaison->Visible = true;
-		this->comboBox1->Visible = true;
-		
-		this->label1->Visible = true;
 		preparation_assoc();
 	}
 
 	private: void preparation_assoc() {
+		this->save_and_reload->Hide();
+		this->dataGridView1->Visible = false;
+
 		DataTable^ valeurs = gcnew DataTable();
-		if (!(valeurs = gererLaBDD->chargementBDD())) {
+		valeurs = gererLaBDD->chargementBDD();
+		
+		if (valeurs->Rows->Count == 0) {
+			this->errorProvider1->SetError(this->associer_coureurs_courses, "Cette fonctionnalite n'est pas utilisable sans coureur !");
 			MessageBox::Show("cette fonctionnalité n'est pas utilisable sans coureur !");
 			return;
 		}
 		actualisationBoutonsLiaison();
 		valeurs = gererLaBDD->chargerListeCoureur();
-		comboBox1->Items->Clear();
-		DataRow^ coureur;
-		int i = 0;
-		for each(coureur in valeurs->Rows) {
-			comboBox1->Items->Add(coureur["idCoureur"]->ToString());
-			i++;
-		}
-		if (i == 0) {
+		if (valeurs->Rows->Count == 0) {
+			this->errorProvider1->SetError(this->associer_coureurs_courses, "Cette fonctionnalite n'est pas utilisable sans course !");
 			MessageBox::Show("cette fonctionnalité n'est pas utilisable sans course !");
 			return;
+		}
+		this->errorProvider1->Clear();
+		comboBox1->Items->Clear();
+		DataRow^ coureur;
+		for each(coureur in valeurs->Rows) {
+			comboBox1->Items->Add(coureur["idCoureur"]->ToString());
 		}
 		this->liaisonDeliaison->DisplayIndex = 3;
 		this->comboBox1->SelectedIndex = 0;
@@ -311,9 +321,15 @@ private:
 		this->dataGridView1->DataSource = gererLaBDD->chargementBDD();
 		int i = 0;
 		for each(DataRow^ test in gererLaBDD->chargementBDD()->Rows) {
-			dataGridView1->Rows[i]->Cells[0]->Value = gererLaBDD->verificationLiaison(Convert::ToInt32(test["id"]), 1);
+			this->dataGridView1->Rows[i]->Cells[0]->Value = gererLaBDD->verificationLiaison(Convert::ToInt32(test["id"]), 1);
 			i++;
 		}
+
+		this->dataGridView1->ReadOnly = true;
+		this->dataGridView1->Visible = true;
+		this->liaisonDeliaison->Visible = true;
+		this->comboBox1->Visible = true;
+		this->label1->Visible = true;
 	}
 
 	private: void sauvegardeBDD() {
